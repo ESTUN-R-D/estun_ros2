@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot name="estun_dual_arm" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:include filename="$(find estun_description)/urdf/ER20-1780-A6-macro.xacro"/>
+
+  <xacro:arg name="rarm_prefix" default="rarm_"/>
+  <xacro:arg name="larm_prefix" default="larm_"/>
+  <xacro:arg name="rarm_kinematics_file" default="$(find estun_description)/config/ER20-1780-A6/default_kinematics.yaml"/>
+  <xacro:arg name="larm_kinematics_file" default="$(find estun_description)/config/ER20-1780-A6/default_kinematics.yaml"/>
+
+  <xacro:arg name="rarm_origin_x" default="0"/>
+  <xacro:arg name="rarm_origin_y" default="-0.5"/>
+  <xacro:arg name="rarm_origin_z" default="0"/>
+  <xacro:arg name="rarm_origin_rr" default="0"/>
+  <xacro:arg name="rarm_origin_rp" default="0"/>
+  <xacro:arg name="rarm_origin_ry" default="0"/>
+
+  <xacro:arg name="larm_origin_x" default="0"/>
+  <xacro:arg name="larm_origin_y" default="0.5"/>
+  <xacro:arg name="larm_origin_z" default="0"/>
+  <xacro:arg name="larm_origin_rr" default="0"/>
+  <xacro:arg name="larm_origin_rp" default="0"/>
+  <xacro:arg name="larm_origin_ry" default="0"/>
+
+  <xacro:property name="rarm_kinematics_dict" value="${xacro.load_yaml('$(arg rarm_kinematics_file)')}"/>
+  <xacro:property name="larm_kinematics_dict" value="${xacro.load_yaml('$(arg larm_kinematics_file)')}"/>
+
+  <link name="world"/>
+
+  <link name="$(arg rarm_prefix)ee_link"/>
+  <xacro:estun_er20_1780_a6
+    prefix="$(arg rarm_prefix)"
+    parent="world"
+    child="$(arg rarm_prefix)ee_link"
+    L1="${rarm_kinematics_dict['kinematics']['L1']}"
+    L2="${rarm_kinematics_dict['kinematics']['L2']}"
+    L3="${rarm_kinematics_dict['kinematics']['L3']}"
+    L4="${rarm_kinematics_dict['kinematics']['L4']}"
+    L5="${rarm_kinematics_dict['kinematics']['L5']}"
+    L6="${rarm_kinematics_dict['kinematics']['L6']}">
+    <origin
+      xyz="$(arg rarm_origin_x) $(arg rarm_origin_y) $(arg rarm_origin_z)"
+      rpy="$(arg rarm_origin_rr) $(arg rarm_origin_rp) $(arg rarm_origin_ry)"/>
+  </xacro:estun_er20_1780_a6>
+
+  <link name="$(arg larm_prefix)ee_link"/>
+  <xacro:estun_er20_1780_a6
+    prefix="$(arg larm_prefix)"
+    parent="world"
+    child="$(arg larm_prefix)ee_link"
+    L1="${larm_kinematics_dict['kinematics']['L1']}"
+    L2="${larm_kinematics_dict['kinematics']['L2']}"
+    L3="${larm_kinematics_dict['kinematics']['L3']}"
+    L4="${larm_kinematics_dict['kinematics']['L4']}"
+    L5="${larm_kinematics_dict['kinematics']['L5']}"
+    L6="${larm_kinematics_dict['kinematics']['L6']}">
+    <origin
+      xyz="$(arg larm_origin_x) $(arg larm_origin_y) $(arg larm_origin_z)"
+      rpy="$(arg larm_origin_rr) $(arg larm_origin_rp) $(arg larm_origin_ry)"/>
+  </xacro:estun_er20_1780_a6>
+</robot>

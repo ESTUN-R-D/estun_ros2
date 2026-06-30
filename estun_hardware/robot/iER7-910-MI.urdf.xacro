@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+<robot name="estun_ier7_910_mi" xmlns:xacro="http://wiki.ros.org/xacro">
+  <!--
+    这是 estun_hardware 的硬件装配入口，不是纯模型入口。
+    这里负责把 estun_description 的纯模型宏与 ros2_control 控制宏组合成控制链路使用的 robot_description。
+    control_mode 必须由上层显式传入，避免顶层 xacro 静默回落到某个业务模式。
+  -->
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="robot_ip" default=""/>
+  <xacro:arg name="use_mock" default="false"/>
+  <xacro:arg name="cmd_port" default="61210"/>
+  <xacro:arg name="servo_port" default="61211"/>
+  <xacro:arg name="status_port" default="61212"/>
+  <xacro:arg name="control_mode" default=""/>
+  <xacro:arg name="motion_period_ms" default="4"/>
+
+  <xacro:arg name="kinematics_file" default="$(find estun_description)/config/iER7-910-MI/default_kinematics.yaml"/>
+  <xacro:property name="kinematics_dict" value="${xacro.load_yaml('$(arg kinematics_file)')}"/>
+
+  <xacro:include filename="$(find estun_description)/urdf/iER7-910-MI-macro.xacro"/>
+  <xacro:include filename="$(find estun_hardware)/config/estun_6dof_control.ros2_control.xacro"/>
+
+  <link name="world"/>
+  <link name="$(arg prefix)ee_link" />
+
+  <xacro:estun_ier7_910_mi 
+    prefix="$(arg prefix)" 
+    parent="world" 
+    child="$(arg prefix)ee_link"
+    L1="${kinematics_dict['kinematics']['L1']}"
+    L2="${kinematics_dict['kinematics']['L2']}"
+    L3="${kinematics_dict['kinematics']['L3']}"
+    L4="${kinematics_dict['kinematics']['L4']}"
+    L5="${kinematics_dict['kinematics']['L5']}"
+    L6="${kinematics_dict['kinematics']['L6']}"
+    L7="${kinematics_dict['kinematics']['L7']}"
+  >
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:estun_ier7_910_mi>
+
+  <xacro:estun_control name="iER7-910-MI" 
+    prefix="$(arg prefix)"
+    robot_ip="$(arg robot_ip)" 
+    cmd_port="$(arg cmd_port)" 
+    servo_port="$(arg servo_port)" 
+    status_port="$(arg status_port)" 
+    control_mode="$(arg control_mode)"
+    motion_period_ms="$(arg motion_period_ms)"
+    robot_model="iER7-910-MI"
+    use_mock="$(arg use_mock)"/>
+
+</robot>

@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="estun_control" params="name prefix robot_ip cmd_port servo_port status_port control_mode motion_period_ms robot_model use_mock">
+    <xacro:property name="normalized_control_mode" value="${control_mode.strip().lower()}"/>
+    <xacro:property name="resolved_servo_mode" value="${'cpos' if normalized_control_mode == 'cpos' else 'apos'}"/>
+    <xacro:property
+      name="resolved_stream_policy"
+      value="${'fifo' if normalized_control_mode == 'plan' else 'latest_overwrite'}"/>
+    <xacro:if value="${not normalized_control_mode}">
+      ${xacro.fatal("control_mode 不能为空，请显式传入 plan/apos/cpos")}
+    </xacro:if>
+    <xacro:if value="${normalized_control_mode not in ('plan', 'apos', 'cpos')}">
+      ${xacro.fatal("control_mode 非法，仅支持 plan/apos/cpos")}
+    </xacro:if>
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${use_mock}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="${use_mock}">
+          <plugin>estun_hardware/EstunHardwareInterface</plugin>
+          <param name="prefix">${prefix}</param>
+          <param name="robot_ip">${robot_ip}</param>
+          <param name="cmd_port">${cmd_port}</param>
+          <param name="servo_port">${servo_port}</param>
+          <param name="status_port">${status_port}</param>
+          <param name="robot_model">${robot_model}</param>
+          <param name="servo_mode">${resolved_servo_mode}</param>
+          <param name="stream_policy">${resolved_stream_policy}</param>
+          <param name="motion_period_ms">${motion_period_ms}</param>
+          <param name="stream_target_depth">5</param>
+          <param name="servo_tracker_lookahead_time">0.03</param>
+          <param name="servo_tracker_gain">2000</param>
+          <!-- 默认关闭 servo trace 落盘，仅在排查“连续同值/速度突变”问题时再显式打开。 -->
+          <param name="servo_trace_enable">false</param>
+        </xacro:unless>
+      </hardware>
+   
+      <joint name="${prefix}joint_1"><command_interface name="position"/><state_interface name="position"/></joint>
+      <joint name="${prefix}joint_2"><command_interface name="position"/><state_interface name="position"/></joint>
+      <joint name="${prefix}joint_3"><command_interface name="position"/><state_interface name="position"/></joint>
+      <joint name="${prefix}joint_4"><command_interface name="position"/><state_interface name="position"/></joint>
+      <joint name="${prefix}joint_5"><command_interface name="position"/><state_interface name="position"/></joint>
+      <joint name="${prefix}joint_6"><command_interface name="position"/><state_interface name="position"/></joint>
+
+      <!-- 笛卡尔实时控制接口 (servoToCPOS) -->
+      <gpio name="${prefix}cartesian_tcp">
+        <command_interface name="x"/>
+        <command_interface name="y"/>
+        <command_interface name="z"/>
+        <command_interface name="a"/>
+        <command_interface name="b"/>
+        <command_interface name="c"/>
+
+        <state_interface name="x"/>
+        <state_interface name="y"/>
+        <state_interface name="z"/>
+        <state_interface name="a"/>
+        <state_interface name="b"/>
+        <state_interface name="c"/>
+      </gpio>
+    </ros2_control>
+  </xacro:macro>
+</robot>

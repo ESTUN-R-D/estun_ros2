@@ -1,0 +1,9 @@
+<library path="estun_hardware_interface">
+  <class name="estun_hardware/EstunHardwareInterface"
+         type="estun_hardware::EstunHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Estun iER Robot Hardware Interface using ERI SDK.
+    </description>
+  </class>
+</library>

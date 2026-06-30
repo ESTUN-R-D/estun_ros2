@@ -1,0 +1,20 @@
+estun_ros2 Repository License Overview
+
+This repository is a mixed-license repository and must not be interpreted as a
+single Apache-2.0 project.
+
+1. Most ROS wrapper source code, build scripts, and documentation are provided
+   under Apache-2.0. See `LICENSES/Apache-2.0.txt`.
+2. The ESTUN SDK headers, shared libraries, runtime configuration files, and
+   release-form motion assets distributed in `estun_libs` are subject to
+   proprietary redistribution terms. See `estun_libs/LICENSE` and
+   `estun_libs/REDISTRIBUTION.md`.
+3. The third-party `liblog4cpp.so` distributed in `estun_libs` is subject to
+   LGPL-2.1-only. See `estun_libs/LICENSES/LGPL-2.1.txt` and
+   `estun_libs/THIRD_PARTY_NOTICES.md`.
+4. If a file or package contains a more specific license notice, that notice
+   governs the corresponding material.
+
+For additional repository-level context, also review `README.md`,
+`estun_libs/LICENSE`, `estun_libs/REDISTRIBUTION.md`, and
+`estun_libs/THIRD_PARTY_NOTICES.md`.

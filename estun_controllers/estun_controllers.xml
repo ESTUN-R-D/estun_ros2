@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<library path="estun_controllers">
+  <class
+    name="estun_controllers/EstunStateBroadcaster"
+    type="estun_controllers::EstunStateBroadcaster"
+    base_class_type="controller_interface::ControllerInterface">
+    <description>Publishes Estun-specific robot and stream status from ros2_control state interfaces.</description>
+  </class>
+  <class
+    name="estun_controllers/EstunDOController"
+    type="estun_controllers::EstunDOController"
+    base_class_type="controller_interface::ControllerInterface">
+    <description>Lifecycle-managed DO service controller backed by the Estun SDK service bridge.</description>
+  </class>
+</library>

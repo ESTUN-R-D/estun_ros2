@@ -1,0 +1,25 @@
+builtin_interfaces/Time stamp
+
+uint8 COMMAND_MODE_APOS=0
+uint8 COMMAND_MODE_CPOS=1
+
+bool connected
+bool robot_error
+bool disconnected
+bool first_packet_received
+
+uint64 status_packet_count
+uint8 active_command_mode
+uint8 configured_servo_mode
+
+uint32 queue_depth
+uint32 queue_max_depth
+uint64 queue_push_count
+uint64 queue_take_count
+uint64 queue_full_drop_count
+uint64 queue_underflow_count
+uint64 repeated_send_count
+
+uint64 servo_call_count
+uint64 servo_sdk_fail_count
+uint64 servo_block_ns_max

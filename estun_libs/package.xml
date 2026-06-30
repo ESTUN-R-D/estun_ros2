@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>estun_libs</name>
+  <version>0.9.0</version>
+  <description>Vendor package for Estun ERI SDK headers, shared libraries, and runtime config files.</description>
+  <maintainer email="zhuyufan@estun.com">Zhuyufan</maintainer>
+  <license file="LICENSES/Apache-2.0.txt">Apache-2.0</license>
+  <license file="LICENSES/ESTUN-SDK-REDISTRIBUTION.txt">Proprietary</license>
+  <license file="LICENSES/LGPL-2.1.txt">LGPL-2.1-only</license>
+  <author email="info@estun.com">ESTUN AUTOMATION CO., LTD.</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

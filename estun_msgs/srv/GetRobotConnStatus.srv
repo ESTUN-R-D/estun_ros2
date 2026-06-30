@@ -1,0 +1,4 @@
+---
+uint8 cmd_status
+uint8 servo_status
+uint8 udp_status

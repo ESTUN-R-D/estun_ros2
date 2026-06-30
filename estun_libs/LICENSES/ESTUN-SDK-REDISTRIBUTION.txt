@@ -1,0 +1,63 @@
+ESTUN SDK Redistribution License
+
+Version 1.0
+Effective date: 2026-06-11
+Licensor: ESTUN AUTOMATION CO., LTD.
+
+1. Covered assets
+
+This license applies to the ESTUN proprietary assets distributed in
+`estun_libs`, including:
+
+- `include/ERIParamManager.h`
+- `include/EstunRobotERI.h`
+- `include/estun_motion/EstunMotion.hpp`
+- `lib/libEstunRobotERI.so`
+- `lib/libEstunMotion.so`
+- `config/log4cpp.conf`
+
+2. Grant of rights
+
+Subject to the conditions below, ESTUN AUTOMATION CO., LTD. grants permission
+to use, copy, install, reproduce, and redistribute the covered assets as part
+of ESTUN ROS 2 support packages and related software distributions.
+
+This grant covers:
+
+- internal repository distribution
+- customer delivery
+- public source repository distribution, including public GitHub repositories
+
+3. Conditions
+
+Redistributions of the covered assets must:
+
+- retain this license text
+- retain applicable copyright notices
+- retain `REDISTRIBUTION.md`, `THIRD_PARTY_NOTICES.md`, and the package-level
+  `LICENSE` file when the covered assets are redistributed with `estun_libs`
+- preserve third-party license materials for any non-ESTUN dependency included
+  in the same package
+
+4. Restrictions
+
+This license does not grant any trademark right, patent license, or right to
+use the ESTUN name, logo, or branding except as needed to accurately identify
+the origin of the covered assets.
+
+5. Warranty disclaimer
+
+THE COVERED ASSETS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR PERFORMANCE.
+
+6. Limitation of liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, ESTUN AUTOMATION CO., LTD.
+SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM OR
+IN CONNECTION WITH THE COVERED ASSETS OR THEIR USE OR REDISTRIBUTION.
+
+7. Contact
+
+Questions regarding this license or redistribution scope should be directed to
+ESTUN AUTOMATION CO., LTD.

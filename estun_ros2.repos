@@ -1,0 +1,9 @@
+repositories:
+  estun_ros2:
+    type: git
+    url: https://github.com/ESTUN-R-D/estun_ros2.git
+    version: main
+  estun_description:
+    type: git
+    url: https://github.com/ESTUN-R-D/estun_description.git
+    version: main

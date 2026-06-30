@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>estun_moveit_config</name>
+  <version>0.9.0</version>
+  <description>MoveIt configuration package for multiple Estun robot models.</description>
+  <maintainer email="zhuyufan@estun.com">Zhuyufan</maintainer>
+  <author email="info@estun.com">ESTUN AUTOMATION CO., LTD.</author>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>moveit_ros_visualization</exec_depend>
+  <exec_depend>moveit_simple_controller_manager</exec_depend>
+  <depend>moveit_ros_move_group</depend>
+  <depend>moveit_kinematics</depend>
+  <depend>moveit_planners_ompl</depend>
+  <depend>moveit_servo</depend>
+  <depend>pilz_industrial_motion_planner</depend>
+  <depend>controller_manager</depend>
+  <depend>controller_manager_msgs</depend>
+  <depend>estun_description</depend>
+  <depend>estun_hardware</depend>
+  <depend>rclpy</depend>
+  <depend>rviz2</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>xacro</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ros2controlcli</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

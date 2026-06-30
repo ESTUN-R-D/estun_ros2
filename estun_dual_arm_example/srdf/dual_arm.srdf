@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="estun_dual_arm">
+  <group name="rarm">
+    <chain base_link="rarm_base_link" tip_link="rarm_flange"/>
+  </group>
+  <group name="larm">
+    <chain base_link="larm_base_link" tip_link="larm_flange"/>
+  </group>
+  <group name="dual_arm">
+    <group name="rarm"/>
+    <group name="larm"/>
+  </group>
+
+  <group_state name="home" group="rarm">
+    <joint name="rarm_joint_1" value="0"/>
+    <joint name="rarm_joint_2" value="0"/>
+    <joint name="rarm_joint_3" value="0"/>
+    <joint name="rarm_joint_4" value="0"/>
+    <joint name="rarm_joint_5" value="0"/>
+    <joint name="rarm_joint_6" value="0"/>
+  </group_state>
+  <group_state name="home" group="larm">
+    <joint name="larm_joint_1" value="0"/>
+    <joint name="larm_joint_2" value="0"/>
+    <joint name="larm_joint_3" value="0"/>
+    <joint name="larm_joint_4" value="0"/>
+    <joint name="larm_joint_5" value="0"/>
+    <joint name="larm_joint_6" value="0"/>
+  </group_state>
+  <group_state name="home" group="dual_arm">
+    <joint name="rarm_joint_1" value="0"/>
+    <joint name="rarm_joint_2" value="0"/>
+    <joint name="rarm_joint_3" value="0"/>
+    <joint name="rarm_joint_4" value="0"/>
+    <joint name="rarm_joint_5" value="0"/>
+    <joint name="rarm_joint_6" value="0"/>
+    <joint name="larm_joint_1" value="0"/>
+    <joint name="larm_joint_2" value="0"/>
+    <joint name="larm_joint_3" value="0"/>
+    <joint name="larm_joint_4" value="0"/>
+    <joint name="larm_joint_5" value="0"/>
+    <joint name="larm_joint_6" value="0"/>
+  </group_state>
+
+  <group_state name="ready" group="dual_arm">
+    <joint name="rarm_joint_1" value="0"/>
+    <joint name="rarm_joint_2" value="0.7517"/>
+    <joint name="rarm_joint_3" value="0.215"/>
+    <joint name="rarm_joint_4" value="0.1562"/>
+    <joint name="rarm_joint_5" value="0.7425"/>
+    <joint name="rarm_joint_6" value="0"/>
+    <joint name="larm_joint_1" value="0"/>
+    <joint name="larm_joint_2" value="0.7517"/>
+    <joint name="larm_joint_3" value="0.215"/>
+    <joint name="larm_joint_4" value="0.1562"/>
+    <joint name="larm_joint_5" value="0.7425"/>
+    <joint name="larm_joint_6" value="0"/>
+  </group_state>
+
+  <virtual_joint name="rarm_world_base" type="fixed" parent_frame="world" child_link="rarm_base_link"/>
+  <virtual_joint name="larm_world_base" type="fixed" parent_frame="world" child_link="larm_base_link"/>
+
+  <disable_collisions link1="rarm_base_link" link2="rarm_link_1" reason="Adjacent"/>
+  <disable_collisions link1="rarm_base_link" link2="rarm_link_2" reason="Default"/>
+  <disable_collisions link1="rarm_base_link" link2="rarm_link_3" reason="Never"/>
+  <disable_collisions link1="rarm_link_1" link2="rarm_link_2" reason="Adjacent"/>
+  <disable_collisions link1="rarm_link_1" link2="rarm_link_3" reason="Never"/>
+  <disable_collisions link1="rarm_link_2" link2="rarm_link_3" reason="Adjacent"/>
+  <disable_collisions link1="rarm_link_2" link2="rarm_link_4" reason="Never"/>
+  <disable_collisions link1="rarm_link_2" link2="rarm_link_5" reason="Never"/>
+  <disable_collisions link1="rarm_link_2" link2="rarm_link_6" reason="Never"/>
+  <disable_collisions link1="rarm_link_3" link2="rarm_link_4" reason="Adjacent"/>
+  <disable_collisions link1="rarm_link_3" link2="rarm_link_5" reason="Never"/>
+  <disable_collisions link1="rarm_link_3" link2="rarm_link_6" reason="Never"/>
+  <disable_collisions link1="rarm_link_4" link2="rarm_link_5" reason="Adjacent"/>
+  <disable_collisions link1="rarm_link_5" link2="rarm_link_6" reason="Adjacent"/>
+
+  <disable_collisions link1="larm_base_link" link2="larm_link_1" reason="Adjacent"/>
+  <disable_collisions link1="larm_base_link" link2="larm_link_2" reason="Default"/>
+  <disable_collisions link1="larm_base_link" link2="larm_link_3" reason="Never"/>
+  <disable_collisions link1="larm_link_1" link2="larm_link_2" reason="Adjacent"/>
+  <disable_collisions link1="larm_link_1" link2="larm_link_3" reason="Never"/>
+  <disable_collisions link1="larm_link_2" link2="larm_link_3" reason="Adjacent"/>
+  <disable_collisions link1="larm_link_2" link2="larm_link_4" reason="Never"/>
+  <disable_collisions link1="larm_link_2" link2="larm_link_5" reason="Never"/>
+  <disable_collisions link1="larm_link_2" link2="larm_link_6" reason="Never"/>
+  <disable_collisions link1="larm_link_3" link2="larm_link_4" reason="Adjacent"/>
+  <disable_collisions link1="larm_link_3" link2="larm_link_5" reason="Never"/>
+  <disable_collisions link1="larm_link_3" link2="larm_link_6" reason="Never"/>
+  <disable_collisions link1="larm_link_4" link2="larm_link_5" reason="Adjacent"/>
+  <disable_collisions link1="larm_link_5" link2="larm_link_6" reason="Adjacent"/>
+</robot>

@@ -1,0 +1,4 @@
+int32 user_id
+---
+bool success
+float64[6] user_data
