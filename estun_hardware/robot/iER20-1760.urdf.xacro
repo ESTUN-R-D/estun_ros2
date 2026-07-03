@@ -38,7 +38,7 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:estun_ier20_1760>
 
-  <xacro:estun_control name="iER20" 
+  <xacro:estun_control name="iER20-1760" 
     prefix="$(arg prefix)"
     robot_ip="$(arg robot_ip)" 
     cmd_port="$(arg cmd_port)" 
