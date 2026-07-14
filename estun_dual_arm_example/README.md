@@ -56,7 +56,7 @@ The current defaults are:
 - left-arm namespace: `larm`
 - right-arm prefix: `rarm_`
 - left-arm prefix: `larm_`
-- default dual-arm model: `ER20-1780-A6`
+- default dual-arm model: `iER7-910-MI`
 
 `joint_state_merger.py` subscribes to:
 
@@ -130,6 +130,7 @@ ros2 launch estun_dual_arm_example dual_moveit.launch.py \
 - `start_rviz`: whether to start RViz
 - `rarm_namespace` / `larm_namespace`: namespaces for the right and left arms
 - `rarm_prefix` / `larm_prefix`: prefixes for the right and left arms
+- `rarm_model` / `larm_model`: models for the right and left arms; the `URDF/Xacro`, kinematics, and joint limits switch with the selected model automatically
 - `rarm_use_fake_hardware` / `larm_use_fake_hardware`: whether to enable fake hardware for each arm
 - `controllers_file`: controller configuration file passed through to `dual_control.launch.py`
 
@@ -147,4 +148,4 @@ Current behavior:
 
 - This package is positioned as an example for dual-arm control and planning.
 - The current default approach combines two independent single-arm control chains; it does not introduce a dedicated dual-arm hardware interface in this package.
-- The current dual-arm MoveIt configuration is organized around the `ER20-1780-A6` model. When switching models, also verify the `URDF/Xacro`, `SRDF`, and planning parameters.
+- The current dual-arm MoveIt setup loads the kinematics and joint limits for `rarm_model` / `larm_model` automatically from `estun_description/config/<model>/`.

@@ -48,6 +48,7 @@ def merge_joint_states(messages: Sequence[JointState]) -> Optional[JointState]:
 class JointStateMerger(Node):
     def __init__(self) -> None:
         super().__init__("joint_state_merger")
+        self._required_arm_names = ("rarm", "larm")
         self._joint_states: Dict[str, JointState] = {}
         self._invalid_joint_state_logged: Dict[str, bool] = {}
         self.declare_parameter("rarm_joint_states_topic", "/rarm/joint_states")
@@ -86,9 +87,9 @@ class JointStateMerger(Node):
             self._invalid_joint_state_logged.pop(arm_name, None)
             return
 
-        # /joint_states 是 MoveIt 的公共输入，不让单臂坏消息污染
-        # 全局合并结果。
-        self._joint_states.pop(arm_name, None)
+        # /joint_states 是 MoveIt 的公共输入。这里收到单臂坏消息时，
+        # 保留上一帧有效缓存，避免全局消息缺半套关节后让可视化/状态监控
+        # 把缺失关节回退到默认零位。
         if self._invalid_joint_state_logged.get(arm_name, False):
             return
         self.get_logger().warning(
@@ -102,11 +103,16 @@ class JointStateMerger(Node):
 
     def _publish_merged(self) -> None:
         # MoveIt 的机器人状态监控订阅全局 /joint_states，
-        # 因此这里按固定左右臂顺序合并。
+        # 因此这里按固定左右臂顺序合并，并要求双臂缓存都已经准备好，
+        # 避免启动初期只发布半套关节状态。
+        if not all(
+            arm_name in self._joint_states
+            for arm_name in self._required_arm_names
+        ):
+            return
         messages = [
             self._joint_states[arm_name]
-            for arm_name in ("rarm", "larm")
-            if arm_name in self._joint_states
+            for arm_name in self._required_arm_names
         ]
         merged = merge_joint_states(messages)
         if merged is None:

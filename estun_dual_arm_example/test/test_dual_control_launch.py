@@ -31,6 +31,13 @@ class FakeLaunchConfiguration:
         return self.defaults[self.name]
 
 
+def _include_launch_arguments(include_action):
+    return {
+        key: _flatten_launch_value(value)
+        for key, value in include_action.launch_arguments
+    }
+
+
 def _flatten_to_text(value):
     flattened = _flatten_launch_value(value)
     if isinstance(flattened, list):
@@ -51,6 +58,13 @@ def _flatten_launch_value(value):
     text = getattr(value, "text", None)
     if text is not None:
         return text.replace("\n...\n", "")
+    defaults = getattr(value.__class__, "defaults", None)
+    name = getattr(value, "name", None)
+    if isinstance(defaults, dict) and name in defaults:
+        return defaults[name]
+    describe = getattr(value, "describe", None)
+    if callable(describe):
+        return describe()
     return value
 
 
@@ -120,6 +134,8 @@ def test_dual_control_launch_declares_two_independent_arms():
         for action in description.entities
         if isinstance(action, DeclareLaunchArgument)
     }
+    assert _flatten_to_text(declared_arguments["rarm_model"].default_value) == "iER7-910-MI"
+    assert _flatten_to_text(declared_arguments["larm_model"].default_value) == "iER7-910-MI"
     assert _flatten_to_text(declared_arguments["rarm_ip"].default_value) == ""
     assert _flatten_to_text(declared_arguments["larm_ip"].default_value) == ""
 
@@ -186,6 +202,26 @@ def test_dual_arm_urdf_expands_without_duplicate_names():
         xacro_args[name]
         for name in ("larm_origin_rr", "larm_origin_rp", "larm_origin_ry")
     )
+    assert xacro_args["rarm_model"] == "iER7-910-MI"
+    assert xacro_args["larm_model"] == "iER7-910-MI"
+
+
+def test_dual_arm_urdf_supports_mixed_models():
+    urdf_path = PACKAGE_ROOT / "urdf" / "dual_arm.urdf.xacro"
+    result = subprocess.run(
+        [
+            "xacro",
+            str(urdf_path),
+            "rarm_model:=ER20-1780-A6",
+            "larm_model:=iER7-910-MI",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "package://estun_description/meshes/ER20-1780-A6/visual/base_link.dae" in result.stdout
+    assert "package://estun_description/meshes/iER7-910-MI/visual/base_link.dae" in result.stdout
 
 
 def test_dual_moveit_launch_declares_control_and_rviz_switches():
@@ -207,6 +243,8 @@ def test_dual_moveit_launch_declares_control_and_rviz_switches():
         "larm_namespace",
         "rarm_prefix",
         "larm_prefix",
+        "rarm_model",
+        "larm_model",
         "rarm_ip",
         "larm_ip",
         "start_control",
@@ -218,6 +256,8 @@ def test_dual_moveit_launch_declares_control_and_rviz_switches():
         for action in description.entities
         if isinstance(action, DeclareLaunchArgument)
     }
+    assert _flatten_to_text(declared_arguments["rarm_model"].default_value) == "iER7-910-MI"
+    assert _flatten_to_text(declared_arguments["larm_model"].default_value) == "iER7-910-MI"
     assert _flatten_to_text(declared_arguments["rarm_ip"].default_value) == ""
     assert _flatten_to_text(declared_arguments["larm_ip"].default_value) == ""
 
@@ -228,9 +268,6 @@ def test_dual_moveit_config_uses_ros2_control_multi_manager():
     )
     kinematics = yaml.safe_load((PACKAGE_ROOT / "config" / "kinematics.yaml").read_text())
     ompl = yaml.safe_load((PACKAGE_ROOT / "config" / "ompl_planning.yaml").read_text())
-    joint_limits = yaml.safe_load(
-        (PACKAGE_ROOT / "config" / "joint_limits.yaml").read_text()
-    )
 
     assert (
         moveit_controllers["moveit_controller_manager"]
@@ -239,8 +276,6 @@ def test_dual_moveit_config_uses_ros2_control_multi_manager():
     assert moveit_controllers["moveit_manage_controllers"] is False
     assert set(kinematics) == {"rarm", "larm"}
     assert {"rarm", "larm", "dual_arm"}.issubset(ompl["ompl"])
-    assert "rarm_joint_6" in joint_limits["joint_limits"]
-    assert "larm_joint_6" in joint_limits["joint_limits"]
 
 
 def test_dual_moveit_launch_rewrites_prefixed_moveit_config():
@@ -259,8 +294,25 @@ def test_dual_moveit_launch_rewrites_prefixed_moveit_config():
     assert groups["larm"].find("chain").get("base_link") == "left_base_link"
     assert groups["larm"].find("chain").get("tip_link") == "left_flange"
 
-    joint_limits = dual_moveit_launch.rewrite_joint_limits(
-        yaml.safe_load((PACKAGE_ROOT / "config" / "joint_limits.yaml").read_text()),
+    joint_limits = dual_moveit_launch.merge_dual_arm_joint_limits(
+        yaml.safe_load(
+            (
+                PACKAGE_ROOT.parents[1]
+                / "estun_description"
+                / "config"
+                / "ER20-1780-A6"
+                / "joint_limits.yaml"
+            ).read_text()
+        ),
+        yaml.safe_load(
+            (
+                PACKAGE_ROOT.parents[1]
+                / "estun_description"
+                / "config"
+                / "iER7-910-MI"
+                / "joint_limits.yaml"
+            ).read_text()
+        ),
         "right_",
         "left_",
     )
@@ -268,6 +320,8 @@ def test_dual_moveit_launch_rewrites_prefixed_moveit_config():
     assert "left_joint_6" in joint_limits["joint_limits"]
     assert "rarm_joint_6" not in joint_limits["joint_limits"]
     assert "larm_joint_6" not in joint_limits["joint_limits"]
+    assert joint_limits["joint_limits"]["right_joint_1"]["max_velocity"] == 3.2288591161895095
+    assert joint_limits["joint_limits"]["left_joint_1"]["max_velocity"] == 5.84685299418
 
 
 def test_dual_moveit_launch_setup_passes_custom_prefix_and_joint_state_topics(monkeypatch):
@@ -277,7 +331,7 @@ def test_dual_moveit_launch_setup_passes_custom_prefix_and_joint_state_topics(mo
         "get_package_share_directory",
         lambda package_name: str(PACKAGE_ROOT)
         if package_name == "estun_dual_arm_example"
-        else str(PACKAGE_ROOT.parents[0] / "estun_description"),
+        else str(PACKAGE_ROOT.parents[1] / "estun_description"),
     )
 
     FakeLaunchConfiguration.defaults = {
@@ -285,6 +339,8 @@ def test_dual_moveit_launch_setup_passes_custom_prefix_and_joint_state_topics(mo
         "larm_namespace": "left_arm_ns",
         "rarm_prefix": "right_",
         "larm_prefix": "left_",
+        "rarm_model": "ER20-1780-A6",
+        "larm_model": "iER7-910-MI",
         "rarm_ip": "",
         "larm_ip": "",
         "rarm_cmd_port": "61210",
@@ -317,6 +373,12 @@ def test_dual_moveit_launch_setup_passes_custom_prefix_and_joint_state_topics(mo
             "larm_joint_states_topic": "/left_arm_ns/joint_states",
         }
     ]
+    include_action = next(
+        action for action in actions if isinstance(action, IncludeLaunchDescription)
+    )
+    include_args = _include_launch_arguments(include_action)
+    assert include_args["rarm_model"] == "ER20-1780-A6"
+    assert include_args["larm_model"] == "iER7-910-MI"
     assert set(nodes_by_package) == {
         "estun_dual_arm_example",
         "moveit_ros_move_group",
@@ -330,7 +392,7 @@ def test_dual_moveit_launch_setup_builds_expected_nodes(monkeypatch):
         "get_package_share_directory",
         lambda package_name: str(PACKAGE_ROOT)
         if package_name == "estun_dual_arm_example"
-        else str(PACKAGE_ROOT.parents[0] / "estun_description"),
+        else str(PACKAGE_ROOT.parents[1] / "estun_description"),
     )
 
     context = object()
@@ -339,6 +401,8 @@ def test_dual_moveit_launch_setup_builds_expected_nodes(monkeypatch):
         "larm_namespace": "larm",
         "rarm_prefix": "rarm_",
         "larm_prefix": "larm_",
+        "rarm_model": "ER20-1780-A6",
+        "larm_model": "iER7-910-MI",
         "rarm_ip": "",
         "larm_ip": "",
         "rarm_cmd_port": "61210",
@@ -377,9 +441,30 @@ def test_dual_moveit_launch_setup_builds_expected_nodes(monkeypatch):
     merger_node = next(
         node for node in node_actions if node.node_package == "estun_dual_arm_example"
     )
+    move_group_node = next(
+        node for node in node_actions if node.node_package == "moveit_ros_move_group"
+    )
     assert _node_parameter_dicts(merger_node) == [
         {
             "rarm_joint_states_topic": "/rarm/joint_states",
             "larm_joint_states_topic": "/larm/joint_states",
         }
     ]
+    include_args = _include_launch_arguments(include_actions[0])
+    assert include_args["rarm_model"] == "ER20-1780-A6"
+    assert include_args["larm_model"] == "iER7-910-MI"
+    move_group_params = _node_parameter_dicts(move_group_node)
+    robot_description = _flatten_to_text(move_group_params[0]["robot_description"])
+    assert "rarm_model:=" in robot_description
+    assert "ER20-1780-A6" in robot_description
+    assert "larm_model:=" in robot_description
+    assert "iER7-910-MI" in robot_description
+    planning = move_group_params[3]
+    assert (
+        planning["robot_description_planning.joint_limits.rarm_joint_1.max_velocity"]
+        == 3.2288591161895095
+    )
+    assert (
+        planning["robot_description_planning.joint_limits.larm_joint_1.max_velocity"]
+        == 5.84685299418
+    )

@@ -7,6 +7,9 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
 
+DEFAULT_DUAL_ARM_MODEL = "iER7-910-MI"
+
+
 def include_estun_control(
     *,
     namespace,
@@ -77,8 +80,12 @@ def generate_launch_description():
         DeclareLaunchArgument("larm_namespace", default_value="larm", description="左臂 ROS 命名空间"),
         DeclareLaunchArgument("rarm_prefix", default_value="rarm_", description="右臂关节/连杆前缀"),
         DeclareLaunchArgument("larm_prefix", default_value="larm_", description="左臂关节/连杆前缀"),
-        DeclareLaunchArgument("rarm_model", default_value="ER20-1780-A6", description="右臂机型"),
-        DeclareLaunchArgument("larm_model", default_value="ER20-1780-A6", description="左臂机型"),
+        DeclareLaunchArgument(
+            "rarm_model", default_value=DEFAULT_DUAL_ARM_MODEL, description="右臂机型"
+        ),
+        DeclareLaunchArgument(
+            "larm_model", default_value=DEFAULT_DUAL_ARM_MODEL, description="左臂机型"
+        ),
         DeclareLaunchArgument("rarm_ip", default_value="", description="右臂 IP"),
         DeclareLaunchArgument("larm_ip", default_value="", description="左臂 IP"),
         DeclareLaunchArgument("rarm_cmd_port", default_value="61210", description="右臂 CMD 端口"),

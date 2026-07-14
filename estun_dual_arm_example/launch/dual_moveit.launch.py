@@ -10,6 +10,9 @@ from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 
 
+DEFAULT_DUAL_ARM_MODEL = "iER7-910-MI"
+
+
 def load_text(path):
     with open(path, "r") as file:
         return file.read()
@@ -23,6 +26,10 @@ def load_yaml(path):
         return None
 
 
+def resolve_model_kinematics_path(desc_share, robot_model):
+    return os.path.join(desc_share, "config", robot_model, "default_kinematics.yaml")
+
+
 def rewrite_prefixed_text(text, rarm_prefix, larm_prefix):
     return (
         text.replace("rarm_", "__ESTUN_RARM_PREFIX__")
@@ -32,17 +39,56 @@ def rewrite_prefixed_text(text, rarm_prefix, larm_prefix):
     )
 
 
-def rewrite_joint_limits(joint_limits_yaml, rarm_prefix, larm_prefix):
+def with_prefixed_joint_limits(joint_limits_yaml, prefix):
+    if not isinstance(joint_limits_yaml, dict):
+        raise RuntimeError("joint_limits.yaml 缺少根映射")
     rewritten = deepcopy(joint_limits_yaml)
     joint_limits = rewritten.get("joint_limits")
     if not isinstance(joint_limits, dict):
         raise RuntimeError("joint_limits.yaml 缺少 joint_limits 映射")
 
     rewritten["joint_limits"] = {
-        rewrite_prefixed_text(joint_name, rarm_prefix, larm_prefix): limit_cfg
-        for joint_name, limit_cfg in joint_limits.items()
+        f"{prefix}{joint_name}": limit_cfg for joint_name, limit_cfg in joint_limits.items()
     }
     return rewritten
+
+
+def merge_dual_arm_joint_limits(
+    rarm_joint_limits_yaml,
+    larm_joint_limits_yaml,
+    rarm_prefix,
+    larm_prefix,
+):
+    rarm_prefixed = with_prefixed_joint_limits(rarm_joint_limits_yaml, rarm_prefix)
+    larm_prefixed = with_prefixed_joint_limits(larm_joint_limits_yaml, larm_prefix)
+
+    merged = {}
+    velocity_scalings = [
+        value
+        for value in (
+            rarm_prefixed.get("default_velocity_scaling_factor"),
+            larm_prefixed.get("default_velocity_scaling_factor"),
+        )
+        if isinstance(value, (int, float))
+    ]
+    acceleration_scalings = [
+        value
+        for value in (
+            rarm_prefixed.get("default_acceleration_scaling_factor"),
+            larm_prefixed.get("default_acceleration_scaling_factor"),
+        )
+        if isinstance(value, (int, float))
+    ]
+    if velocity_scalings:
+        merged["default_velocity_scaling_factor"] = min(velocity_scalings)
+    if acceleration_scalings:
+        merged["default_acceleration_scaling_factor"] = min(acceleration_scalings)
+
+    merged["joint_limits"] = {
+        **rarm_prefixed["joint_limits"],
+        **larm_prefixed["joint_limits"],
+    }
+    return merged
 
 
 def build_joint_states_topic(namespace):
@@ -69,6 +115,8 @@ def launch_setup(context, *args, **kwargs):
     larm_namespace = LaunchConfiguration("larm_namespace").perform(context)
     rarm_prefix = LaunchConfiguration("rarm_prefix").perform(context)
     larm_prefix = LaunchConfiguration("larm_prefix").perform(context)
+    rarm_model = LaunchConfiguration("rarm_model").perform(context)
+    larm_model = LaunchConfiguration("larm_model").perform(context)
     start_control = parse_bool(
         LaunchConfiguration("start_control").perform(context), "start_control"
     )
@@ -77,12 +125,8 @@ def launch_setup(context, *args, **kwargs):
     )
 
     urdf_file = os.path.join(dual_share, "urdf", "dual_arm.urdf.xacro")
-    rarm_kinematics_file = os.path.join(
-        desc_share, "config", "ER20-1780-A6", "default_kinematics.yaml"
-    )
-    larm_kinematics_file = os.path.join(
-        desc_share, "config", "ER20-1780-A6", "default_kinematics.yaml"
-    )
+    rarm_kinematics_file = resolve_model_kinematics_path(desc_share, rarm_model)
+    larm_kinematics_file = resolve_model_kinematics_path(desc_share, larm_model)
     robot_description = {
         "robot_description": Command(
             [
@@ -92,6 +136,10 @@ def launch_setup(context, *args, **kwargs):
                 rarm_prefix,
                 " larm_prefix:=",
                 larm_prefix,
+                " rarm_model:=",
+                rarm_model,
+                " larm_model:=",
+                larm_model,
                 " rarm_kinematics_file:=",
                 rarm_kinematics_file,
                 " larm_kinematics_file:=",
@@ -108,8 +156,9 @@ def launch_setup(context, *args, **kwargs):
         )
     }
     kinematics_yaml = load_yaml(os.path.join(dual_share, "config", "kinematics.yaml"))
-    joint_limits_yaml = rewrite_joint_limits(
-        load_yaml(os.path.join(dual_share, "config", "joint_limits.yaml")),
+    joint_limits_yaml = merge_dual_arm_joint_limits(
+        load_yaml(os.path.join(desc_share, "config", rarm_model, "joint_limits.yaml")),
+        load_yaml(os.path.join(desc_share, "config", larm_model, "joint_limits.yaml")),
         rarm_prefix,
         larm_prefix,
     )
@@ -149,8 +198,8 @@ def launch_setup(context, *args, **kwargs):
                     "larm_namespace": LaunchConfiguration("larm_namespace"),
                     "rarm_prefix": LaunchConfiguration("rarm_prefix"),
                     "larm_prefix": LaunchConfiguration("larm_prefix"),
-                    "rarm_model": "ER20-1780-A6",
-                    "larm_model": "ER20-1780-A6",
+                    "rarm_model": LaunchConfiguration("rarm_model"),
+                    "larm_model": LaunchConfiguration("larm_model"),
                     "rarm_ip": LaunchConfiguration("rarm_ip"),
                     "larm_ip": LaunchConfiguration("larm_ip"),
                     "rarm_cmd_port": LaunchConfiguration("rarm_cmd_port"),
@@ -236,6 +285,12 @@ def generate_launch_description():
         DeclareLaunchArgument("larm_namespace", default_value="larm", description="左臂 ROS 命名空间"),
         DeclareLaunchArgument("rarm_prefix", default_value="rarm_", description="右臂关节/连杆前缀"),
         DeclareLaunchArgument("larm_prefix", default_value="larm_", description="左臂关节/连杆前缀"),
+        DeclareLaunchArgument(
+            "rarm_model", default_value=DEFAULT_DUAL_ARM_MODEL, description="右臂机型"
+        ),
+        DeclareLaunchArgument(
+            "larm_model", default_value=DEFAULT_DUAL_ARM_MODEL, description="左臂机型"
+        ),
         DeclareLaunchArgument("rarm_ip", default_value="", description="右臂 IP"),
         DeclareLaunchArgument("larm_ip", default_value="", description="左臂 IP"),
         DeclareLaunchArgument("rarm_cmd_port", default_value="61210", description="右臂 CMD 端口"),

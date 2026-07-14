@@ -56,7 +56,7 @@ estun_dual_arm_example/launch/dual_moveit.launch.py
 - 左臂命名空间：`larm`
 - 右臂前缀：`rarm_`
 - 左臂前缀：`larm_`
-- 双臂默认机型：`ER20-1780-A6`
+- 双臂默认机型：`iER7-910-MI`
 
 `joint_state_merger.py` 默认订阅：
 
@@ -130,6 +130,7 @@ ros2 launch estun_dual_arm_example dual_moveit.launch.py \
 - `start_rviz`：是否启动 RViz
 - `rarm_namespace` / `larm_namespace`：左右臂命名空间
 - `rarm_prefix` / `larm_prefix`：左右臂前缀
+- `rarm_model` / `larm_model`：左右臂机型；`URDF/Xacro`、运动学参数和关节限位会随机型自动切换
 - `rarm_use_fake_hardware` / `larm_use_fake_hardware`：左右臂是否启用虚拟硬件
 - `controllers_file`：透传给 `dual_control.launch.py` 的控制器配置文件
 
@@ -147,4 +148,4 @@ ros2 launch estun_dual_arm_example dual_moveit.launch.py \
 
 - 本包定位为双臂控制与规划的使用案例
 - 当前默认按两套独立单臂控制链路组合，不在本包内新增双臂专用硬件接口
-- 当前双臂 MoveIt 配置按 `ER20-1780-A6` 模型组织；若切换机型，需要同步核对 `URDF/Xacro`、`SRDF` 和规划参数
+- 当前双臂 MoveIt 会按 `rarm_model` / `larm_model` 从 `estun_description/config/<model>/` 自动加载对应运动学参数和关节限位

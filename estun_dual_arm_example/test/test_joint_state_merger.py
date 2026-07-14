@@ -121,7 +121,27 @@ def test_merge_joint_states_drops_incomplete_optional_fields():
     assert list(merged.effort) == [3.0, 4.0, 5.0, 6.0]
 
 
-def test_merger_drops_invalid_arm_cache():
+def test_merger_waits_until_both_arms_ready():
+    node = MERGER_MODULE.JointStateMerger()
+    node._publisher = _PublisherStub()
+    try:
+        node._store_rarm(
+            _make_joint_state(
+                names=["rarm_joint_1", "rarm_joint_2"],
+                positions=[0.1, 0.2],
+                velocities=[1.0, 2.0],
+                efforts=[3.0, 4.0],
+            )
+        )
+
+        node._publish_merged()
+
+        assert node._publisher.messages == []
+    finally:
+        node.destroy_node()
+
+
+def test_merger_keeps_last_valid_arm_cache():
     node = MERGER_MODULE.JointStateMerger()
     node._publisher = _PublisherStub()
     try:
@@ -164,9 +184,14 @@ def test_merger_drops_invalid_arm_cache():
         node._publish_merged()
 
         second_msg = node._publisher.messages[-1]
-        assert second_msg.name == ["rarm_joint_1", "rarm_joint_2"]
-        assert list(second_msg.position) == [0.1, 0.2]
-        assert list(second_msg.velocity) == [1.0, 2.0]
-        assert list(second_msg.effort) == [3.0, 4.0]
+        assert second_msg.name == [
+            "rarm_joint_1",
+            "rarm_joint_2",
+            "larm_joint_1",
+            "larm_joint_2",
+        ]
+        assert list(second_msg.position) == [0.1, 0.2, 0.3, 0.4]
+        assert list(second_msg.velocity) == []
+        assert list(second_msg.effort) == [3.0, 4.0, 5.0, 6.0]
     finally:
         node.destroy_node()
