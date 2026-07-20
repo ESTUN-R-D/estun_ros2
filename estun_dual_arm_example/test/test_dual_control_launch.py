@@ -5,7 +5,16 @@ import sys
 import xml.etree.ElementTree as ET
 
 import yaml
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
+from launch.events.process import ProcessExited
 from launch_ros.actions import Node
 
 TOOLS_DIR = Path(__file__).resolve().parents[2] / "tools"
@@ -365,6 +374,7 @@ def test_dual_moveit_launch_setup_passes_custom_prefix_and_joint_state_topics(mo
     node_actions = [action for action in actions if isinstance(action, Node)]
     nodes_by_package = {node.node_package: node for node in node_actions}
 
+    assert not any(isinstance(action, RegisterEventHandler) for action in actions)
     merger_node = nodes_by_package["estun_dual_arm_example"]
 
     assert _node_parameter_dicts(merger_node) == [
@@ -429,14 +439,35 @@ def test_dual_moveit_launch_setup_builds_expected_nodes(monkeypatch):
         action for action in actions if isinstance(action, IncludeLaunchDescription)
     ]
     node_actions = [action for action in actions if isinstance(action, Node)]
+    event_handlers = [
+        action for action in actions if isinstance(action, RegisterEventHandler)
+    ]
 
     assert len(include_actions) == 1
     assert len(node_actions) == 3
+    assert len(event_handlers) == 1
     assert {node.node_package for node in node_actions} == {
         "estun_dual_arm_example",
         "moveit_ros_move_group",
         "rviz2",
     }
+    rviz_node = next(node for node in node_actions if node.node_package == "rviz2")
+    event_handler = event_handlers[0].event_handler
+    assert isinstance(event_handler, OnProcessExit)
+    rviz_exit = ProcessExited(
+        action=rviz_node,
+        name="rviz2_dual_arm",
+        cmd=[],
+        cwd=None,
+        env=None,
+        pid=1,
+        returncode=0,
+    )
+    assert event_handler.matches(rviz_exit)
+    on_exit_actions = event_handler.describe()[1]
+    assert len(on_exit_actions) == 1
+    assert isinstance(on_exit_actions[0], EmitEvent)
+    assert isinstance(on_exit_actions[0].event, Shutdown)
 
     merger_node = next(
         node for node in node_actions if node.node_package == "estun_dual_arm_example"

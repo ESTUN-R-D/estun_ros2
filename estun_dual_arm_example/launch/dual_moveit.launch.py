@@ -4,7 +4,15 @@ from copy import deepcopy
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument,
+    EmitEvent,
+    IncludeLaunchDescription,
+    OpaqueFunction,
+    RegisterEventHandler,
+)
+from launch.event_handlers import OnProcessExit
+from launch.events import Shutdown
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -259,21 +267,33 @@ def launch_setup(context, *args, **kwargs):
     )
 
     if start_rviz:
-        nodes_to_launch.append(
-            Node(
-                package="rviz2",
-                executable="rviz2",
-                name="rviz2_dual_arm",
-                output="screen",
-                arguments=["-d", os.path.join(dual_share, "rviz", "dual_moveit.rviz")],
-                parameters=[
-                    robot_description,
-                    robot_description_semantic,
-                    {"robot_description_kinematics": kinematics_yaml},
-                    robot_description_planning,
-                    *planning_pipeline_parameters,
-                ],
-            )
+        rviz_node = Node(
+            package="rviz2",
+            executable="rviz2",
+            name="rviz2_dual_arm",
+            output="screen",
+            arguments=["-d", os.path.join(dual_share, "rviz", "dual_moveit.rviz")],
+            parameters=[
+                robot_description,
+                robot_description_semantic,
+                {"robot_description_kinematics": kinematics_yaml},
+                robot_description_planning,
+                *planning_pipeline_parameters,
+            ],
+        )
+        nodes_to_launch.extend(
+            [
+                rviz_node,
+                # 关闭 RViz 表示双臂示例会话结束，避免 MoveIt 与控制节点继续发布双臂模型。
+                RegisterEventHandler(
+                    OnProcessExit(
+                        target_action=rviz_node,
+                        on_exit=[
+                            EmitEvent(event=Shutdown(reason="dual-arm RViz exited")),
+                        ],
+                    )
+                ),
+            ]
         )
 
     return nodes_to_launch
