@@ -31,15 +31,12 @@ The runtime implementations live in `estun_hardware`.
 - `srv/GetWorldCpos.srv`
 - `srv/GetJointValue.srv`
 
-### Tool / User Coordinate Frames
-
-- `srv/GetTool.srv`
-- `srv/GetUser.srv`
-
 ### DO (Digital Output)
 
 - `srv/SetDo.srv`
 - `srv/GetDo.srv`
+
+DO ports are passed to the ERI SDK using the interface's `uint16` type. The SDK determines valid ports and read/write permissions.
 
 ## Usage Relationships
 

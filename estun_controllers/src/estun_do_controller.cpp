@@ -11,10 +11,6 @@ namespace estun_controllers
 {
 namespace
 {
-constexpr uint16_t kDoPortMin = 1;
-constexpr uint16_t kDoPortMax = 256;
-constexpr uint16_t kDoExternalReadonlyMax = 17;
-
 std::string normalize_namespace(std::string value)
 {
   if (value.empty()) {
@@ -186,16 +182,6 @@ void EstunDOController::on_set_do(
     response->message = "controller is inactive";
     return;
   }
-  if (request->port < kDoPortMin || request->port > kDoPortMax) {
-    response->success = false;
-    response->message = "invalid port, expected 1..256";
-    return;
-  }
-  if (request->port <= kDoExternalReadonlyMax) {
-    response->success = false;
-    response->message = "external write is not allowed for port 1..17";
-    return;
-  }
   if (!set_do_client_ || !set_do_client_->wait_for_service(std::chrono::milliseconds(0))) {
     response->success = false;
     response->message = "SDK set_do service is not available";
@@ -228,12 +214,6 @@ void EstunDOController::on_get_do(
     response->success = false;
     response->value = false;
     response->message = "controller is inactive";
-    return;
-  }
-  if (request->port < kDoPortMin || request->port > kDoPortMax) {
-    response->success = false;
-    response->value = false;
-    response->message = "invalid port, expected 1..256";
     return;
   }
   if (!get_do_client_ || !get_do_client_->wait_for_service(std::chrono::milliseconds(0))) {

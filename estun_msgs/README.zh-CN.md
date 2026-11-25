@@ -31,15 +31,12 @@
 - `srv/GetWorldCpos.srv`
 - `srv/GetJointValue.srv`
 
-### 工具 / 用户坐标系
-
-- `srv/GetTool.srv`
-- `srv/GetUser.srv`
-
 ### DO（数字输出）
 
 - `srv/SetDo.srv`
 - `srv/GetDo.srv`
+
+DO 端口按接口中的 `uint16` 类型传给 ERI SDK，有效端口范围与读写权限由 SDK 判断。
 
 ## 使用关系
 

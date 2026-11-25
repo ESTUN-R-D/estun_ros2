@@ -10,6 +10,7 @@
 #include <memory>
 #include <optional>
 #include <array>
+#include <unordered_map>
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -19,8 +20,6 @@
 #include "estun_msgs/srv/get_do.hpp"
 #include "estun_msgs/srv/get_joint_value.hpp"
 #include "estun_msgs/srv/get_robot_conn_status.hpp"
-#include "estun_msgs/srv/get_tool.hpp"
-#include "estun_msgs/srv/get_user.hpp"
 #include "estun_msgs/srv/get_world_cpos.hpp"
 #include "estun_msgs/srv/set_do.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -177,12 +176,6 @@ private:
   void on_get_do(
     const std::shared_ptr<estun_msgs::srv::GetDo::Request> request,
     std::shared_ptr<estun_msgs::srv::GetDo::Response> response);
-  void on_get_tool(
-    const std::shared_ptr<estun_msgs::srv::GetTool::Request> request,
-    std::shared_ptr<estun_msgs::srv::GetTool::Response> response);
-  void on_get_user(
-    const std::shared_ptr<estun_msgs::srv::GetUser::Request> request,
-    std::shared_ptr<estun_msgs::srv::GetUser::Response> response);
   std::unique_lock<std::mutex> acquire_service_sdk_lock();
 
   // SDK 管理实例与时间戳
@@ -248,7 +241,8 @@ private:
   std::unique_ptr<estun_libs::EstunServoStreamEngine> stream_engine_;
   EstunServoTrace servo_trace_;
   // 仅用于 ESTUN_TEST_STUB_SDK=1，保证无硬件回归时 service bridge 返回可预测结果。
-  std::array<bool, 257> test_stub_do_values_{};
+  // 按端口存储，避免将 SDK 的有效端口范围固化为测试缓存的数组边界。
+  std::unordered_map<uint16_t, bool> test_stub_do_values_;
   std::atomic<int64_t> last_sdk_fail_log_time_ms_{0};
   std::atomic<int64_t> last_read_disconnect_log_time_ms_{0};
   std::atomic<int64_t> last_read_alarm_log_time_ms_{0};

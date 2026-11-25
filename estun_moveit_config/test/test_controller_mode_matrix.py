@@ -19,8 +19,6 @@ from estun_msgs.srv import (
     GetConnectionStatus,
     GetCurErrMsg,
     GetDo,
-    GetTool,
-    GetUser,
     SetDo,
 )
 from estun_msgs.msg import EstunRobotStatus
@@ -126,8 +124,6 @@ class ControllerManagerClient:
         self._cur_err_client = self._node.create_client(GetCurErrMsg, "/estun/get_cur_err_msg")
         self._set_do_client = self._node.create_client(SetDo, "/estun/set_do")
         self._get_do_client = self._node.create_client(GetDo, "/estun/get_do")
-        self._tool_client = self._node.create_client(GetTool, "/estun/get_tool")
-        self._user_client = self._node.create_client(GetUser, "/estun/get_user")
         self._last_status = None
         self._status_subscription = self._node.create_subscription(
             EstunRobotStatus,
@@ -175,8 +171,6 @@ class ControllerManagerClient:
             (self._cur_err_client, "/estun/get_cur_err_msg"),
             (self._set_do_client, "/estun/set_do"),
             (self._get_do_client, "/estun/get_do"),
-            (self._tool_client, "/estun/get_tool"),
-            (self._user_client, "/estun/get_user"),
         ]
         deadline = time.monotonic() + timeout_sec
         while time.monotonic() < deadline:
@@ -219,24 +213,6 @@ class ControllerManagerClient:
             self._get_do_client,
             request,
             "get_do",
-        )
-
-    def get_tool(self, tool_id: int):
-        request = GetTool.Request()
-        request.tool_id = tool_id
-        return self._call(
-            self._tool_client,
-            request,
-            "get_tool",
-        )
-
-    def get_user(self, user_id: int):
-        request = GetUser.Request()
-        request.user_id = user_id
-        return self._call(
-            self._user_client,
-            request,
-            "get_user",
         )
 
     def list_controller_states(self) -> dict:
@@ -1071,22 +1047,21 @@ def test_service_bridge_sdk_services_are_stubbed_in_test_mode():
             assert err.err_id == 0
             assert err.err_msg == ""
 
-            set_do = cm_client.set_do(port=18, value=True)
-            assert set_do.success
-            assert set_do.message == "ok"
+            # 覆盖旧写保护区与接口边界，测试桩按端口记录，实际端口权限交给 SDK。
+            for port in (0, 1, 15, 16, 17, 18, 256, 257, 65535):
+                get_do = cm_client.get_do(port=port)
+                assert get_do.success
+                assert get_do.value is False
 
-            get_do = cm_client.get_do(port=18)
-            assert get_do.success
-            assert get_do.value is True
-            assert get_do.message == "ok"
+                for value in (True, False):
+                    set_do = cm_client.set_do(port=port, value=value)
+                    assert set_do.success
+                    assert set_do.message == "ok"
 
-            tool = cm_client.get_tool(tool_id=2)
-            assert tool.success
-            assert list(tool.tool_data) == [20.0, 21.0, 22.0, 23.0, 24.0, 25.0]
-
-            user = cm_client.get_user(user_id=3)
-            assert user.success
-            assert list(user.user_data) == [300.0, 301.0, 302.0, 303.0, 304.0, 305.0]
+                    get_do = cm_client.get_do(port=port)
+                    assert get_do.success
+                    assert get_do.value is value
+                    assert get_do.message == "ok"
     finally:
         _terminate_process_and_collect_output(proc)
 

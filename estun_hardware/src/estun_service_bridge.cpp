@@ -16,10 +16,6 @@ namespace estun_hardware
 {
 namespace
 {
-static constexpr uint16_t kDoPortMin = 1;
-static constexpr uint16_t kDoPortMax = 256;
-static constexpr uint16_t kDoExternalReadonlyMax = 17;
-
 void * g_estun_msgs_fastrtps_typesupport_handle = nullptr;
 
 std::string make_node_name(const std::string & prefix)
@@ -139,14 +135,6 @@ bool EstunServiceBridge::start(
       service_node_->create_service<estun_msgs::srv::GetDo>(
       service_name("get_do"),
       handlers.get_do);
-    srv_get_tool_ =
-      service_node_->create_service<estun_msgs::srv::GetTool>(
-      service_name("get_tool"),
-      handlers.get_tool);
-    srv_get_user_ =
-      service_node_->create_service<estun_msgs::srv::GetUser>(
-      service_name("get_user"),
-      handlers.get_user);
 
     service_executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
     service_executor_->add_node(service_node_);
@@ -193,8 +181,6 @@ void EstunServiceBridge::stop()
   srv_get_joint_value_.reset();
   srv_set_do_.reset();
   srv_get_do_.reset();
-  srv_get_tool_.reset();
-  srv_get_user_.reset();
 
   service_executor_.reset();
   service_node_.reset();
@@ -257,18 +243,6 @@ bool EstunHardwareInterface::start_service_bridge()
     const std::shared_ptr<estun_msgs::srv::GetDo::Request> request,
     std::shared_ptr<estun_msgs::srv::GetDo::Response> response) {
       on_get_do(request, response);
-    };
-  handlers.get_tool =
-    [this](
-    const std::shared_ptr<estun_msgs::srv::GetTool::Request> request,
-    std::shared_ptr<estun_msgs::srv::GetTool::Response> response) {
-      on_get_tool(request, response);
-    };
-  handlers.get_user =
-    [this](
-    const std::shared_ptr<estun_msgs::srv::GetUser::Request> request,
-    std::shared_ptr<estun_msgs::srv::GetUser::Response> response) {
-      on_get_user(request, response);
     };
 
   return service_bridge_.start(
@@ -400,17 +374,6 @@ void EstunHardwareInterface::on_set_do(
   const std::shared_ptr<estun_msgs::srv::SetDo::Request> request,
   std::shared_ptr<estun_msgs::srv::SetDo::Response> response)
 {
-  if (request->port < kDoPortMin || request->port > kDoPortMax) {
-    response->success = false;
-    response->message = "invalid port, expected 1..256";
-    return;
-  }
-  if (request->port <= kDoExternalReadonlyMax) {
-    response->success = false;
-    response->message = "external write is not allowed for port 1..17";
-    return;
-  }
-
   if (cfg_.test_stub_sdk) {
     test_stub_do_values_[request->port] = request->value;
     response->success = true;
@@ -420,6 +383,7 @@ void EstunHardwareInterface::on_set_do(
 
   {
     auto sdk_lock = acquire_service_sdk_lock();
+    // 端口是否合法、是否允许写入，由 ERI SDK 按控制器配置判断。
     response->success = eri_manager_.setDo(
       static_cast<UINT32>(request->port),
       request->value ? 1U : 0U);
@@ -431,13 +395,6 @@ void EstunHardwareInterface::on_get_do(
   const std::shared_ptr<estun_msgs::srv::GetDo::Request> request,
   std::shared_ptr<estun_msgs::srv::GetDo::Response> response)
 {
-  if (request->port < kDoPortMin || request->port > kDoPortMax) {
-    response->success = false;
-    response->value = false;
-    response->message = "invalid port, expected 1..256";
-    return;
-  }
-
   if (cfg_.test_stub_sdk) {
     response->success = true;
     response->value = test_stub_do_values_[request->port];
@@ -453,58 +410,6 @@ void EstunHardwareInterface::on_get_do(
   response->success = true;
   response->value = (value != 0U);
   response->message = "ok";
-}
-
-void EstunHardwareInterface::on_get_tool(
-  const std::shared_ptr<estun_msgs::srv::GetTool::Request> request,
-  std::shared_ptr<estun_msgs::srv::GetTool::Response> response)
-{
-  double tool_data[6]{0.0};
-  if (request->tool_id < 0) {
-    response->success = false;
-    return;
-  }
-  if (cfg_.test_stub_sdk) {
-    response->success = true;
-    for (size_t i = 0; i < 6; ++i) {
-      response->tool_data[i] =
-        static_cast<double>(request->tool_id * 10 + static_cast<int>(i));
-    }
-    return;
-  }
-  {
-    auto sdk_lock = acquire_service_sdk_lock();
-    response->success = eri_manager_.getTool(static_cast<int>(request->tool_id), tool_data);
-  }
-  for (size_t i = 0; i < 6; ++i) {
-    response->tool_data[i] = tool_data[i];
-  }
-}
-
-void EstunHardwareInterface::on_get_user(
-  const std::shared_ptr<estun_msgs::srv::GetUser::Request> request,
-  std::shared_ptr<estun_msgs::srv::GetUser::Response> response)
-{
-  double user_data[6]{0.0};
-  if (request->user_id < 0) {
-    response->success = false;
-    return;
-  }
-  if (cfg_.test_stub_sdk) {
-    response->success = true;
-    for (size_t i = 0; i < 6; ++i) {
-      response->user_data[i] =
-        static_cast<double>(request->user_id * 100 + static_cast<int>(i));
-    }
-    return;
-  }
-  {
-    auto sdk_lock = acquire_service_sdk_lock();
-    response->success = eri_manager_.getUser(static_cast<int>(request->user_id), user_data);
-  }
-  for (size_t i = 0; i < 6; ++i) {
-    response->user_data[i] = user_data[i];
-  }
 }
 
 }  // namespace estun_hardware

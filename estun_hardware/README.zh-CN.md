@@ -118,8 +118,6 @@ ros2 launch estun_hardware estun_control.launch.py \
 5. `/estun/get_joint_value`
 6. `/estun/set_do`
 7. `/estun/get_do`
-8. `/estun/get_tool`
-9. `/estun/get_user`
 
 这些服务的接口定义请查看 `estun_msgs`。
 

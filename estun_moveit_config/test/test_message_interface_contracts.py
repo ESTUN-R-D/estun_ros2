@@ -15,8 +15,6 @@ def test_estun_msgs_cmake_lists_all_public_interfaces():
         "srv/GetDo.srv",
         "srv/GetJointValue.srv",
         "srv/GetRobotConnStatus.srv",
-        "srv/GetTool.srv",
-        "srv/GetUser.srv",
         "srv/GetWorldCpos.srv",
         "srv/SetDo.srv",
     ]
@@ -89,18 +87,6 @@ def test_service_bridge_interfaces_keep_expected_shapes():
             "---",
             "bool success",
             "float64[16] pos",
-        ],
-        "GetTool.srv": [
-            "int32 tool_id",
-            "---",
-            "bool success",
-            "float64[6] tool_data",
-        ],
-        "GetUser.srv": [
-            "int32 user_id",
-            "---",
-            "bool success",
-            "float64[6] user_data",
         ],
         "GetCurErrMsg.srv": [
             "---",

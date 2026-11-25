@@ -269,7 +269,7 @@ TEST_F(RosRuntimeTest, DoControllerStopsClientThreadOnDestructionWithoutCleanup)
   SUCCEED();
 }
 
-TEST_F(RosRuntimeTest, DoControllerEnforcesPortRulesBeforeSdkForwarding)
+TEST_F(RosRuntimeTest, DoControllerReportsUnavailableSdkServices)
 {
   auto controller = std::make_shared<estun_controllers::EstunDOController>();
   ASSERT_NE(controller, nullptr);
@@ -292,23 +292,16 @@ TEST_F(RosRuntimeTest, DoControllerEnforcesPortRulesBeforeSdkForwarding)
   ASSERT_TRUE(set_client->wait_for_service(kWaitTimeout));
   ASSERT_TRUE(get_client->wait_for_service(kWaitTimeout));
 
-  auto invalid_get = std::make_shared<estun_msgs::srv::GetDo::Request>();
-  invalid_get->port = 0;
-  auto invalid_get_future = get_client->async_send_request(invalid_get);
-  ASSERT_EQ(invalid_get_future.wait_for(kWaitTimeout), std::future_status::ready);
-  EXPECT_FALSE(invalid_get_future.get()->success);
-
-  auto readonly_set = std::make_shared<estun_msgs::srv::SetDo::Request>();
-  readonly_set->port = 17;
-  readonly_set->value = true;
-  auto readonly_set_future = set_client->async_send_request(readonly_set);
-  ASSERT_EQ(readonly_set_future.wait_for(kWaitTimeout), std::future_status::ready);
-  const auto readonly_response = readonly_set_future.get();
-  EXPECT_FALSE(readonly_response->success);
-  EXPECT_EQ(readonly_response->message, "external write is not allowed for port 1..17");
+  auto unavailable_get = std::make_shared<estun_msgs::srv::GetDo::Request>();
+  unavailable_get->port = 0;
+  auto unavailable_get_future = get_client->async_send_request(unavailable_get);
+  ASSERT_EQ(unavailable_get_future.wait_for(kWaitTimeout), std::future_status::ready);
+  const auto unavailable_get_response = unavailable_get_future.get();
+  EXPECT_FALSE(unavailable_get_response->success);
+  EXPECT_EQ(unavailable_get_response->message, "SDK get_do service is not available");
 
   auto unavailable_set = std::make_shared<estun_msgs::srv::SetDo::Request>();
-  unavailable_set->port = 18;
+  unavailable_set->port = 15;
   unavailable_set->value = true;
   auto unavailable_set_future = set_client->async_send_request(unavailable_set);
   ASSERT_EQ(unavailable_set_future.wait_for(kWaitTimeout), std::future_status::ready);
@@ -329,25 +322,26 @@ TEST_F(RosRuntimeTest, DoControllerForwardsRequestsToSdkServices)
   std::atomic<uint16_t> set_port{0};
   std::atomic<bool> set_value{false};
   std::atomic<uint16_t> get_port{0};
+  std::atomic<bool> sdk_accepts_request{true};
   auto set_service = sdk_node->create_service<estun_msgs::srv::SetDo>(
     "/fake_estun/set_do",
-    [&set_port, &set_value](
+    [&set_port, &set_value, &sdk_accepts_request](
       const std::shared_ptr<estun_msgs::srv::SetDo::Request> request,
       std::shared_ptr<estun_msgs::srv::SetDo::Response> response) {
       set_port = request->port;
       set_value = request->value;
-      response->success = true;
-      response->message = "fake set ok";
+      response->success = sdk_accepts_request.load();
+      response->message = response->success ? "fake set ok" : "fake SDK rejected write";
     });
   auto get_service = sdk_node->create_service<estun_msgs::srv::GetDo>(
     "/fake_estun/get_do",
-    [&get_port](
+    [&get_port, &sdk_accepts_request](
       const std::shared_ptr<estun_msgs::srv::GetDo::Request> request,
       std::shared_ptr<estun_msgs::srv::GetDo::Response> response) {
       get_port = request->port;
-      response->success = true;
-      response->value = true;
-      response->message = "fake get ok";
+      response->success = sdk_accepts_request.load();
+      response->value = response->success;
+      response->message = response->success ? "fake get ok" : "fake SDK rejected read";
     });
   (void)set_service;
   (void)get_service;
@@ -375,26 +369,52 @@ TEST_F(RosRuntimeTest, DoControllerForwardsRequestsToSdkServices)
   ASSERT_TRUE(set_client->wait_for_service(kWaitTimeout));
   ASSERT_TRUE(get_client->wait_for_service(kWaitTimeout));
 
-  auto set_request = std::make_shared<estun_msgs::srv::SetDo::Request>();
-  set_request->port = 18;
-  set_request->value = true;
-  auto set_future = set_client->async_send_request(set_request);
-  ASSERT_EQ(set_future.wait_for(kWaitTimeout), std::future_status::ready);
-  const auto set_response = set_future.get();
-  EXPECT_TRUE(set_response->success);
-  EXPECT_EQ(set_response->message, "fake set ok");
-  EXPECT_EQ(set_port.load(), 18u);
-  EXPECT_TRUE(set_value.load());
+  // 覆盖旧写保护区、旧范围之外及接口类型边界，校验端口原样传给 SDK。
+  for (const uint16_t port : {0, 1, 15, 16, 17, 18, 256, 257, 65535}) {
+    SCOPED_TRACE(port);
+    auto set_request = std::make_shared<estun_msgs::srv::SetDo::Request>();
+    set_request->port = port;
+    set_request->value = (port % 2 == 0);
+    auto set_future = set_client->async_send_request(set_request);
+    ASSERT_EQ(set_future.wait_for(kWaitTimeout), std::future_status::ready);
+    const auto set_response = set_future.get();
+    EXPECT_TRUE(set_response->success);
+    EXPECT_EQ(set_response->message, "fake set ok");
+    EXPECT_EQ(set_port.load(), port);
+    EXPECT_EQ(set_value.load(), set_request->value);
 
-  auto get_request = std::make_shared<estun_msgs::srv::GetDo::Request>();
-  get_request->port = 19;
-  auto get_future = get_client->async_send_request(get_request);
-  ASSERT_EQ(get_future.wait_for(kWaitTimeout), std::future_status::ready);
-  const auto get_response = get_future.get();
-  EXPECT_TRUE(get_response->success);
-  EXPECT_TRUE(get_response->value);
-  EXPECT_EQ(get_response->message, "fake get ok");
-  EXPECT_EQ(get_port.load(), 19u);
+    auto get_request = std::make_shared<estun_msgs::srv::GetDo::Request>();
+    get_request->port = port;
+    auto get_future = get_client->async_send_request(get_request);
+    ASSERT_EQ(get_future.wait_for(kWaitTimeout), std::future_status::ready);
+    const auto get_response = get_future.get();
+    EXPECT_TRUE(get_response->success);
+    EXPECT_TRUE(get_response->value);
+    EXPECT_EQ(get_response->message, "fake get ok");
+    EXPECT_EQ(get_port.load(), port);
+  }
+
+  // SDK 拒绝请求时，控制器必须保留失败状态与错误说明。
+  sdk_accepts_request = false;
+  auto rejected_set = std::make_shared<estun_msgs::srv::SetDo::Request>();
+  rejected_set->port = 15;
+  rejected_set->value = true;
+  auto rejected_set_future = set_client->async_send_request(rejected_set);
+  ASSERT_EQ(rejected_set_future.wait_for(kWaitTimeout), std::future_status::ready);
+  const auto rejected_set_response = rejected_set_future.get();
+  EXPECT_EQ(set_port.load(), 15u);
+  EXPECT_FALSE(rejected_set_response->success);
+  EXPECT_EQ(rejected_set_response->message, "fake SDK rejected write");
+
+  auto rejected_get = std::make_shared<estun_msgs::srv::GetDo::Request>();
+  rejected_get->port = 16;
+  auto rejected_get_future = get_client->async_send_request(rejected_get);
+  ASSERT_EQ(rejected_get_future.wait_for(kWaitTimeout), std::future_status::ready);
+  const auto rejected_get_response = rejected_get_future.get();
+  EXPECT_EQ(get_port.load(), 16u);
+  EXPECT_FALSE(rejected_get_response->success);
+  EXPECT_FALSE(rejected_get_response->value);
+  EXPECT_EQ(rejected_get_response->message, "fake SDK rejected read");
 
   EXPECT_EQ(
     controller->on_cleanup(

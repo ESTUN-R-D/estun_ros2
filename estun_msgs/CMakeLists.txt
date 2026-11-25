@@ -20,8 +20,6 @@ set(srv_files
   "srv/GetDo.srv"
   "srv/GetJointValue.srv"
   "srv/GetRobotConnStatus.srv"
-  "srv/GetTool.srv"
-  "srv/GetUser.srv"
   "srv/GetWorldCpos.srv"
   "srv/SetDo.srv"
 )

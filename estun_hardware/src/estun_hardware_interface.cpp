@@ -767,7 +767,7 @@ hardware_interface::CallbackReturn EstunHardwareInterface::on_configure(const rc
   stop_completed_.store(false, std::memory_order_relaxed);
   stop_in_progress_.store(false, std::memory_order_relaxed);
   status_cache_.set_latest_is_endpoint(false);
-  test_stub_do_values_.fill(false);
+  test_stub_do_values_.clear();
 
   bool synchronized = false;
   if (cfg_.test_stub_sdk) {

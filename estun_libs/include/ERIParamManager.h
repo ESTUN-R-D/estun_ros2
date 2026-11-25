@@ -12,15 +12,16 @@
 typedef unsigned short UINT16;
 typedef unsigned __int64 UINT64;
 typedef unsigned int UINT32;
+typedef unsigned int uint32_t;
 #endif
 //机器人状态信息
 struct RobotStatus
 {
 	bool isRobotError; //机器人端是否有错误
 	char isStartCorrect;//是否开始纠偏
-	bool isEndPoint;//机器人是否仍处于结束处理状态，0 表示已经停下
-	double worldCpos[16];//当前机器人世界坐标系下笛卡尔位置 mm+弧度（rpy）
-	double jointValue[16];//当前机器人各关节值
+	bool isEndPoint;//机器人是否还在运动中 1表示运动中 0表示已经停下
+	double worldCpos[16];//当前机器人世界坐标系下笛卡尔位置 - 顺序：[x, y, z, roll, pitch, yaw]- 单位：x,y,z = mm，roll,pitch,yaw = rad
+	double jointValue[16];//当前机器人各关节值，单位rad
 };
 typedef void (*P_RobotStatusCallback)(RobotStatus robotStatus);
 class ERISocketManager;
@@ -31,7 +32,8 @@ class ESTUNROBOTERI_API ERIParamManager
 	ERIParamManager();
 	~ERIParamManager();
 	 /**
-     * 设置机器人通信参数
+     * 设置 PC 端通信参数；仅写入本地网络参数，不代表机器人连接已建立
+	 * 实际连接成功通常以 SDK 日志中 UDPSocket、ServoSocket、cmdSocket 均出现 connect success 为准
 	 * @robotIp 机器人ip地址
 	 * @cmdPort 命令通道端口号
 	 * @servoPort servo通道端口号
@@ -106,18 +108,6 @@ class ESTUNROBOTERI_API ERIParamManager
      */
 	bool setUser(const UINT16 userId);
 	/**
-     * 获取工具参数
-	 * @mapTool  toolId工具id 
-	 * @toolData 工具参数数据分别对应 x,y,z,a,b,c
-     */
-	bool getTool(int toolId,double toolData[6]);
-	/**
-     * 获取用户坐标参数
-	 * @mapUser  userId用户坐标id
-	 * @userData 用户坐标数据分别对应 x,y,z,a,b,c
-     */
-	bool getUser(int userId,double userData[6]);
-	/**
      * 修改工具参数
 	 * @mapTool  toolId工具id 
 	 * @toolData 工具参数数据分别对应 x,y,z,a,b,c
@@ -135,15 +125,18 @@ class ESTUNROBOTERI_API ERIParamManager
      * 实时关节运动
 	 * @timeStamp 时间戳
 	 * @pos 点位信息
+	 * [J1 ~ J6] （单位：deg）
 	 * @IsEndPoint 是否结束点
 	 * @return -1失败
      */
-	// servoToAPOS等三个函数均为阻塞函数，由控制器调度是否读取并继续执行，timeStamp暂无实际作用，后续版本会增加timeStamp的功能
 	int servoToAPOS(UINT64& timeStamp,double *pos,bool IsEndPoint = false);	 
 	/**
      * 实时笛卡尔运动
 	 * @timeStamp 时间戳
 	 * @pos 点位信息
+	 * [x, y, z, a, b, c]
+     *- x,y,z 是 mm
+     *- a,b,c 是 deg，并且语义是 ZYX 欧拉角
 	 * @IsEndPoint 是否结束点
 	 * @return -1失败
      */
@@ -152,6 +145,9 @@ class ESTUNROBOTERI_API ERIParamManager
      * 实时偏移运动
 	 * @timeStamp 时间戳
 	 * @pos 点位信息
+	 * [x, y, z, a, b, c]
+     *- x,y,z 是 mm
+     *- a,b,c 是 deg，并且语义是 ZYX 固定角
 	 * @IsEndPoint 是否结束点
 	 * @return -1失败
      */

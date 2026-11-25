@@ -4,6 +4,8 @@ Language: [Chinese](./README.zh-CN.md) | English
 
 `estun_libs` is the ESTUN ERI SDK asset distribution package. It provides headers, shared libraries, and runtime configuration files to other ROS 2 packages. This package does not start the robot by itself.
 
+The bundled ERI SDK version is `1.0.0.19`.
+
 ## What It Contains
 
 The current deliverables include:

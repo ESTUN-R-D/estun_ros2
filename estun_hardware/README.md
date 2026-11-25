@@ -118,8 +118,6 @@ Current services:
 5. `/estun/get_joint_value`
 6. `/estun/set_do`
 7. `/estun/get_do`
-8. `/estun/get_tool`
-9. `/estun/get_user`
 
 See `estun_msgs` for the interface definitions of these services.
 

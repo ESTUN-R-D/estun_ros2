@@ -14,8 +14,6 @@
 #include "estun_msgs/srv/get_do.hpp"
 #include "estun_msgs/srv/get_joint_value.hpp"
 #include "estun_msgs/srv/get_robot_conn_status.hpp"
-#include "estun_msgs/srv/get_tool.hpp"
-#include "estun_msgs/srv/get_user.hpp"
 #include "estun_msgs/srv/get_world_cpos.hpp"
 #include "estun_msgs/srv/set_do.hpp"
 #include "rclcpp/executors/single_threaded_executor.hpp"
@@ -48,12 +46,6 @@ public:
   using GetDoHandler = std::function<void (
         const std::shared_ptr<estun_msgs::srv::GetDo::Request>,
         std::shared_ptr<estun_msgs::srv::GetDo::Response>)>;
-  using GetToolHandler = std::function<void (
-        const std::shared_ptr<estun_msgs::srv::GetTool::Request>,
-        std::shared_ptr<estun_msgs::srv::GetTool::Response>)>;
-  using GetUserHandler = std::function<void (
-        const std::shared_ptr<estun_msgs::srv::GetUser::Request>,
-        std::shared_ptr<estun_msgs::srv::GetUser::Response>)>;
 
   struct Handlers
   {
@@ -64,8 +56,6 @@ public:
     GetJointValueHandler get_joint_value;
     SetDoHandler set_do;
     GetDoHandler get_do;
-    GetToolHandler get_tool;
-    GetUserHandler get_user;
   };
 
   ~EstunServiceBridge();
@@ -90,8 +80,6 @@ private:
   rclcpp::Service<estun_msgs::srv::GetJointValue>::SharedPtr srv_get_joint_value_;
   rclcpp::Service<estun_msgs::srv::SetDo>::SharedPtr srv_set_do_;
   rclcpp::Service<estun_msgs::srv::GetDo>::SharedPtr srv_get_do_;
-  rclcpp::Service<estun_msgs::srv::GetTool>::SharedPtr srv_get_tool_;
-  rclcpp::Service<estun_msgs::srv::GetUser>::SharedPtr srv_get_user_;
 };
 
 }  // namespace estun_hardware
