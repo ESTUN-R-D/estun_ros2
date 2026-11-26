@@ -8,6 +8,10 @@ Language: [Chinese](./README.zh-CN.md) | English
 
 Note: this repository targets ROS 2 Humble Hawksbill.
 
+This branch supports ERI SDK `1.0.0.17`. We recommend using the
+[main branch](https://github.com/ESTUN-R-D/estun_ros2/tree/main)
+for the latest version.
+
 ## Overview
 
 This repository provides source code for ESTUN robot ROS 2 support packages, including:
@@ -46,7 +50,7 @@ git lfs install
 
 mkdir -p ~/estun_ws/src
 cd ~/estun_ws/src
-git clone https://github.com/ESTUN-R-D/estun_ros2.git
+git clone --branch V1.0.0.17 https://github.com/ESTUN-R-D/estun_ros2.git
 git clone https://github.com/ESTUN-R-D/estun_description.git
 
 cd ~/estun_ws
@@ -60,7 +64,7 @@ colcon build --packages-select \
 source install/setup.bash
 ```
 
-If you manage the workspace with `vcs` (multi-repository import tool), you can also use the [`estun_ros2.repos`](./estun_ros2.repos) manifest provided by this repository.
+If you manage the workspace with `vcs` (multi-repository import tool), you can also use the [`estun_ros2.repos`](./estun_ros2.repos) manifest provided by this repository; it uses `main` by default. To use this branch, set the `estun_ros2` `version` to `V1.0.0.17`.
 
 See each package README for launch arguments, runtime modes, and interface details.
 
