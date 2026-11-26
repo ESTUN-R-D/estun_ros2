@@ -19,6 +19,13 @@
 
 机器人描述、网格、运动学参数和机型限速参数由配套仓库 [`estun_description`](https://github.com/ESTUN-R-D/estun_description) 维护；使用时需要和本仓库同级放在工作区 `src/` 下。
 
+## SDK 版本
+
+| 分支 | 对应版本 |
+| --- | --- |
+| [main](https://github.com/ESTUN-R-D/estun_ros2/tree/main) | ERI SDK `1.0.0.19`；ERI runtime 组件 `V1.0.0.41` |
+| [V1.0.0.17](https://github.com/ESTUN-R-D/estun_ros2/tree/V1.0.0.17) | ERI SDK `1.0.0.17` |
+
 ## 文档
 
 详细说明请查看各包 README：
@@ -46,7 +53,7 @@ git lfs install
 
 mkdir -p ~/estun_ws/src
 cd ~/estun_ws/src
-git clone https://github.com/ESTUN-R-D/estun_ros2.git
+git clone --branch main https://github.com/ESTUN-R-D/estun_ros2.git
 git clone https://github.com/ESTUN-R-D/estun_description.git
 
 cd ~/estun_ws
@@ -60,7 +67,7 @@ colcon build --packages-select \
 source install/setup.bash
 ```
 
-如果使用 `vcs`（多仓库导入工具）管理工作区，也可以使用本仓库提供的 [`estun_ros2.repos`](./estun_ros2.repos) 清单。
+如果使用 `vcs`（多仓库导入工具）管理工作区，也可以使用本仓库提供的 [`estun_ros2.repos`](./estun_ros2.repos) 清单，该清单默认使用 `main` 分支。
 
 更具体的启动参数、运行模式和接口说明，请分别查看各包 README。
 

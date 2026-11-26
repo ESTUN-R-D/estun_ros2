@@ -19,6 +19,13 @@ This repository provides source code for ESTUN robot ROS 2 support packages, inc
 
 Robot descriptions, meshes, kinematic parameters, and machine limits are maintained in the companion [`estun_description`](https://github.com/ESTUN-R-D/estun_description) repository. Use it as a sibling repository under the workspace `src/` directory.
 
+## SDK Versions
+
+| Branch | Version |
+| --- | --- |
+| [main](https://github.com/ESTUN-R-D/estun_ros2/tree/main) | ERI SDK `1.0.0.19`; ERI runtime component `V1.0.0.41` |
+| [V1.0.0.17](https://github.com/ESTUN-R-D/estun_ros2/tree/V1.0.0.17) | ERI SDK `1.0.0.17` |
+
 ## Documentation
 
 Detailed package-level documentation is available in each package README:
@@ -46,7 +53,7 @@ git lfs install
 
 mkdir -p ~/estun_ws/src
 cd ~/estun_ws/src
-git clone https://github.com/ESTUN-R-D/estun_ros2.git
+git clone --branch main https://github.com/ESTUN-R-D/estun_ros2.git
 git clone https://github.com/ESTUN-R-D/estun_description.git
 
 cd ~/estun_ws
@@ -60,7 +67,7 @@ colcon build --packages-select \
 source install/setup.bash
 ```
 
-If you manage the workspace with `vcs` (multi-repository import tool), you can also use the [`estun_ros2.repos`](./estun_ros2.repos) manifest provided by this repository.
+If you manage the workspace with `vcs` (multi-repository import tool), you can also use the [`estun_ros2.repos`](./estun_ros2.repos) manifest provided by this repository; it uses the `main` branch by default.
 
 See each package README for launch arguments, runtime modes, and interface details.
 
